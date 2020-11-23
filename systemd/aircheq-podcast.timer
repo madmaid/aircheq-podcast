@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily Timer for aircheq-podcast 
+
+[Timer]
+OnCalendar=Mon,Tue,Wed,Thu,Fri,Sat,Sun *-*-* 4:50:00
+Unit=airhceq-podcast.service
+
+[Install]
+WantedBy=timers.target

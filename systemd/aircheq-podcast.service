@@ -1,0 +1,8 @@
+[Unit]
+Description=Copy podcast content
+[Service]
+User=nginx
+Type=oneshot
+ExecStart=/usr/local/bin/aircheq-podcast -i /media/recorded/aircheq/ -o /var/www/html/aircheq-podcast/ -u http://192.168.1.128/aircheq-podcast/
+[Install]
+WantedBy=default.target
