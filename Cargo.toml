@@ -1,5 +1,5 @@
 [package]
-name = "aircheq_podcast"
+name = "aircheq-podcast"
 version = "0.1.0"
 authors = ["madmaid <madmaid@users.noreply.github.com>"]
 edition = "2018"
