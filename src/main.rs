@@ -10,7 +10,9 @@ use std::time::SystemTime;
 use getopts::Options;
 use rss::{ChannelBuilder, Item, ItemBuilder};
 // use serde::{Deserialize, Serialize};
+use nix::unistd::{chown, Uid};
 use url::Url;
+use users::get_user_by_name;
 use walkdir::{DirEntry, WalkDir};
 
 // const NGINX_STATIC_DIR: &'static str = "/var/www/html/aircheq-podcast/";
@@ -132,6 +134,9 @@ fn main() -> anyhow::Result<()> {
             let src = &target.path();
             let published = root_dir.join(&filename);
             fs::copy(&src, &published).unwrap();
+            let nginx_user = get_user_by_name("nginx").expect("user not found.");
+            let uid = Uid::from_raw(nginx_user.uid());
+            chown(&published, Some(uid), None).expect("permission not changed");
             ItemBuilder::default()
                 .title(filename.to_string())
                 .link(
