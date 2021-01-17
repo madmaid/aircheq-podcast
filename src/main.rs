@@ -2,6 +2,7 @@
 extern crate serde_derive;
 
 use std::env;
+use std::ffi::OsStr;
 use std::fs;
 use std::io::{BufReader, BufWriter};
 use std::path::{Path, PathBuf};
@@ -130,13 +131,36 @@ fn main() -> anyhow::Result<()> {
     let items: Vec<Item> = dir_items
         .iter()
         .map(|target| {
-            let filename = &target.file_name().to_str().unwrap();
             let src = &target.path();
-            let published = root_dir.join(&filename);
-            fs::copy(&src, &published).unwrap();
+            let ext = &src.extension().unwrap_or(OsStr::new("")).to_str().unwrap();
+
+            let filename = &target.file_name().to_str().unwrap();
+            let mut dst: PathBuf = root_dir.join(&filename);
+
+            let published = if ext == &"m2ts" {
+                dst.set_extension("mp4");
+                let ffmpeg_cmd = format!(
+                    "ffmpeg -y -i \"{src}\" -c:v copy -c:a copy \"{dst}\"",
+                    src = &src.to_str().unwrap(),
+                    dst = &dst.to_str().unwrap()
+                );
+
+                subprocess::Exec::shell(ffmpeg_cmd)
+                    .join()
+                    .expect("failed to execute FFMpeg");
+                dst
+            } else {
+                fs::copy(&src, &dst).unwrap();
+                dst
+            };
             let nginx_user = get_user_by_name("nginx").expect("user not found.");
             let uid = Uid::from_raw(nginx_user.uid());
             chown(&published, Some(uid), None).expect("permission not changed");
+            let filename = &published
+                .file_name()
+                .unwrap_or(OsStr::new(""))
+                .to_str()
+                .unwrap();
             ItemBuilder::default()
                 .title(filename.to_string())
                 .link(
